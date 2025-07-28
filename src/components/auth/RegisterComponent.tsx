@@ -1,13 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import React, { useContext, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 import MyDangerButton from "@/components/UI/MyDangerButton";
 
 function RegisterComponent() {
-  const router = useRouter();
-
   const [stateForm, setStateForm] = useState({
     userName: "",
     login: "",
