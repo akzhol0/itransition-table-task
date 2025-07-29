@@ -1,7 +1,9 @@
 "use client";
 
 import React, { createContext, useEffect, useState } from "react";
-// import Cookies from "js-cookie";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import Cookies from "js-cookie";
 
 type ContextProps = {
   isAuth: boolean;
@@ -18,10 +20,17 @@ export function ContextOverAll({ children }: ContextOverAllProps) {
   const [isAuth, setIsAuth] = useState<boolean>(false);
 
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     !isAuth && checkIfUserLogged();
-  }, []);
+  });
 
-  const checkIfUserLogged = () => {};
+  const checkIfUserLogged = () => {
+    const uid = Cookies.get('uid');
+
+    if (uid !== undefined) {
+      setIsAuth(true);
+    }
+  };
 
   return (
     <contextData.Provider

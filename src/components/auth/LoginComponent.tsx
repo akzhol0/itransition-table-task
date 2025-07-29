@@ -5,9 +5,14 @@ import { contextData } from "@/components/context/Context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MyDangerButton from "@/components/UI/MyDangerButton";
+import {signInWithEmailAndPassword} from "@firebase/auth";
+import {auth} from "@/config/config";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import Cookies from "js-cookie";
 
 const LoginComponent = () => {
-  const { isAuth } = useContext(contextData);
+  const { isAuth, setIsAuth } = useContext(contextData);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,8 +31,18 @@ const LoginComponent = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log('get')
 
-    console.log(stateForm.login, stateForm.password);
+    signInWithEmailAndPassword(auth, stateForm.login, stateForm.password)
+      .then((userCredential) => {
+        setIsAuth(true)
+        Cookies.set("uid", userCredential.user.uid);
+        router.push("/");
+        console.log(userCredential);
+      })
+      .catch((err) => {
+        setStateForm({ ...stateForm, error: err.message });
+      });
   };
 
   return (
@@ -59,7 +74,7 @@ const LoginComponent = () => {
         <div className="flex flex-col gap-2 text-sm ">
           <Link href="/sign-up">
             <p className="text-center cursor-pointer hover:underline">
-              Haven't registered yet? Register!
+              Haven&#39;t registered yet? Register!
             </p>
           </Link>
           <MyDangerButton

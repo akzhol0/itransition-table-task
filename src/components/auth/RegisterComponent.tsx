@@ -3,16 +3,21 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import MyDangerButton from "@/components/UI/MyDangerButton";
+import {createUserWithEmailAndPassword} from "@firebase/auth";
+import {useRouter} from "next/navigation";
+import {auth, db} from "@/config/config";
+import {doc, setDoc} from "@firebase/firestore";
+import {UserInfoTypes} from "@/types/service";
 
 function RegisterComponent() {
   const [stateForm, setStateForm] = useState({
     userName: "",
     login: "",
     password: "",
-    birthdate: "",
     repeatPassword: "",
     error: "",
   });
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStateForm({ ...stateForm, [e.target.name]: e.target.value });
@@ -21,7 +26,7 @@ function RegisterComponent() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (
-      [stateForm.userName, stateForm.login, stateForm.birthdate].some(
+      [stateForm.userName, stateForm.login].some(
         (field) => field === "",
       )
     ) {
@@ -34,53 +39,31 @@ function RegisterComponent() {
       return;
     }
 
-    console.log(
-      stateForm.login,
-      stateForm.birthdate,
-      stateForm.userName,
-      stateForm.password,
-    );
+    createUserWithEmailAndPassword(auth, stateForm.login, stateForm.password)
+      .then((userCredentials) => {
+        router.push("/sign-in");
+        console.log(userCredentials);
 
-    // createUserWithEmailAndPassword(auth, stateForm.login, stateForm.password)
-    //   .then((userCredentials) => {
-    //     router.push("/login");
-    //     addUserFirebase(userCredentials);
-    //     sendEmailVerification(userCredentials.user);
-    //   })
-    //   .catch((err) => {
-    //     setStateForm({ ...stateForm, error: err.code });
-    //   });
+        const userInputInfo = {
+          userName: stateForm.userName,
+          userLogin: stateForm.login,
+          password: stateForm.password,
+          status: 'active',
+          createdAt: userCredentials.user.metadata.creationTime,
+          lastActiveDate: userCredentials.user.metadata.lastSignInTime,
+          blocked: false,
+        }
+
+        addUserFirebase(userInputInfo);
+      })
+      .catch((err) => {
+        setStateForm({ ...stateForm, error: err.code });
+      });
   };
 
-  // const addUserFirebase = async (userInfocb: any) => {
-  //   const dateStr = stateForm.birthdate;
-  //   const milliseconds = new Date(dateStr).getTime();
-  //
-  //   let url;
-  //   if (userAvatar !== null) {
-  //     const fileRef = ref(storage, `avatars/${userInfocb.user.uid}`);
-  //     await uploadBytes(fileRef, userAvatar);
-  //     url = await getDownloadURL(fileRef);
-  //   } else {
-  //     url = null;
-  //   }
-  //
-  //   const obj = {
-  //     userName: stateForm.userName,
-  //     userId: userInfocb.user.uid,
-  //     userLogin: stateForm.login,
-  //     userPassword: stateForm.password,
-  //     role: "user",
-  //     gender: stateForm.gender,
-  //     image: url !== null ? url : "/images/user.png",
-  //     birthdate: milliseconds,
-  //     friends: [],
-  //     verified: false,
-  //   };
-  //
-  //   await setDoc(doc(db, "users", userInfocb.user.uid), obj);
-  //   setUsers((prev: any) => [...prev, obj]);
-  // };
+  const addUserFirebase = async (userInfoCB: UserInfoTypes) => {
+    await setDoc(doc(db, "users", stateForm.login), userInfoCB);
+  };
 
   return (
     <form
@@ -98,20 +81,6 @@ function RegisterComponent() {
           value={stateForm.userName}
           onChange={handleChange}
         />
-        <div className="flex flex-col items-center justify-start bg-white ">
-          <div className="w-full flex gap-2 justify-center items-center">
-            <label className="ps-2 text-gray-700 text-sm whitespace-nowrap">
-              Birthday
-            </label>
-            <input
-              type="date"
-              name="birthdate"
-              value={stateForm.birthdate}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
         <input
           className="w-[300px] rounded-lg ps-2 h-[60px] border-b border-gray-300 focus:outline-0"
           placeholder="Email"
