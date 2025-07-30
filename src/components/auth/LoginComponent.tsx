@@ -5,11 +5,10 @@ import { contextData } from "@/components/context/Context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MyDangerButton from "@/components/UI/MyDangerButton";
-import {signInWithEmailAndPassword} from "@firebase/auth";
-import {auth} from "@/config/config";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
+import { signInWithEmailAndPassword } from "@firebase/auth";
+import { auth, db } from "@/config/config";
 import Cookies from "js-cookie";
+import { doc, updateDoc } from "@firebase/firestore";
 
 const LoginComponent = () => {
   const { isAuth, setIsAuth } = useContext(contextData);
@@ -29,16 +28,14 @@ const LoginComponent = () => {
     setStateForm({ ...stateForm, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('get')
 
     signInWithEmailAndPassword(auth, stateForm.login, stateForm.password)
-      .then((userCredential) => {
-        setIsAuth(true)
-        Cookies.set("uid", userCredential.user.uid);
+      .then(async (userCredentials) => {
+        setIsAuth(true);
+        Cookies.set("uid", userCredentials.user.uid);
         router.push("/");
-        console.log(userCredential);
       })
       .catch((err) => {
         setStateForm({ ...stateForm, error: err.message });

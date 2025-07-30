@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import MyDangerButton from "@/components/UI/MyDangerButton";
-import {createUserWithEmailAndPassword} from "@firebase/auth";
-import {useRouter} from "next/navigation";
-import {auth, db} from "@/config/config";
-import {doc, setDoc} from "@firebase/firestore";
-import {UserInfoTypes} from "@/types/service";
+import { createUserWithEmailAndPassword } from "@firebase/auth";
+import { useRouter } from "next/navigation";
+import { auth, db } from "@/config/config";
+import { doc, setDoc } from "@firebase/firestore";
+import { UserInfoTypes } from "@/types/service";
+import { contextData } from "@/components/context/Context";
 
 function RegisterComponent() {
+  const { setUsers } = useContext(contextData);
+
   const [stateForm, setStateForm] = useState({
     userName: "",
     login: "",
@@ -25,11 +28,7 @@ function RegisterComponent() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (
-      [stateForm.userName, stateForm.login].some(
-        (field) => field === "",
-      )
-    ) {
+    if ([stateForm.userName, stateForm.login].some((field) => field === "")) {
       setStateForm({ ...stateForm, error: "Fill out" });
       return;
     }
@@ -48,12 +47,12 @@ function RegisterComponent() {
           userName: stateForm.userName,
           userLogin: stateForm.login,
           password: stateForm.password,
-          status: 'active',
+          status: "active",
           createdAt: userCredentials.user.metadata.creationTime,
           lastActiveDate: userCredentials.user.metadata.lastSignInTime,
           blocked: false,
-        }
-
+          uid: userCredentials.user.uid,
+        };
         addUserFirebase(userInputInfo);
       })
       .catch((err) => {
@@ -62,6 +61,8 @@ function RegisterComponent() {
   };
 
   const addUserFirebase = async (userInfoCB: UserInfoTypes) => {
+    // @ts-ignore
+    setUsers((prev: UserInfoTypes) => [...prev, userInfoCB]);
     await setDoc(doc(db, "users", stateForm.login), userInfoCB);
   };
 

@@ -6,4 +6,5 @@ export type UserInfoTypes = {
   createdAt: string | undefined;
   lastActiveDate: string | undefined;
   blocked: boolean;
-}
+  uid: string;
+};
