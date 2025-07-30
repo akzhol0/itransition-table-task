@@ -6,12 +6,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MyDangerButton from "@/components/UI/MyDangerButton";
 import { signInWithEmailAndPassword } from "@firebase/auth";
-import { auth, db } from "@/config/config";
+import { auth } from "@/config/config";
 import Cookies from "js-cookie";
-import { doc, updateDoc } from "@firebase/firestore";
 
 const LoginComponent = () => {
-  const { isAuth, setIsAuth } = useContext(contextData);
+  const { isAuth, setIsAuth, getCurrentUser } = useContext(contextData);
   const router = useRouter();
 
   useEffect(() => {
@@ -36,6 +35,7 @@ const LoginComponent = () => {
         setIsAuth(true);
         Cookies.set("uid", userCredentials.user.uid);
         router.push("/");
+        getCurrentUser();
       })
       .catch((err) => {
         setStateForm({ ...stateForm, error: err.message });

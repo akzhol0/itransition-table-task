@@ -4,6 +4,7 @@ import "./globals.css";
 import { ContextOverAll } from "@/components/context/Context";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
+import { Toaster } from "react-hot-toast";
 
 const rubik = Rubik({
   subsets: ["latin"],
@@ -26,6 +27,7 @@ export default function RootLayout({
       <body className={rubik.className}>
         <ContextOverAll>
           <Header />
+          <Toaster position="top-right" />
           {children}
           <Footer />
         </ContextOverAll>

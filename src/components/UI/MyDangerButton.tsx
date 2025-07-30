@@ -6,7 +6,6 @@ interface MyButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string;
 }
 
-// eslint-disable-next-line react/display-name
 const MyDangerButton = memo(
   ({
     children,

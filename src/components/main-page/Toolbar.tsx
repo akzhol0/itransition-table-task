@@ -2,24 +2,56 @@ import React, { useContext } from "react";
 import { Lock, LockOpen, Trash2 } from "lucide-react";
 import { UserInfoTypes } from "@/types/service";
 import { contextData } from "@/components/context/Context";
+import { deleteDoc, doc, updateDoc } from "@firebase/firestore";
+import { db } from "@/config/config";
+import toast from "react-hot-toast";
 
 type ToolbarProps = {
   toolbarAccess: boolean;
   dataChangeUser: UserInfoTypes | null;
+  setDataChangeUser: (arg0: UserInfoTypes | null) => void;
+  setToolbarAccess: (arg0: boolean) => void;
+  handleRemove: () => void;
+  setFilter: (arg0: string) => void;
+  filter: string;
 };
 
-const Toolbar = ({ toolbarAccess, dataChangeUser }: ToolbarProps) => {
-  const { currentUser } = useContext(contextData);
+const Toolbar = ({
+  toolbarAccess,
+  dataChangeUser,
+  setDataChangeUser,
+  setToolbarAccess,
+  handleRemove,
+  setFilter,
+  filter,
+}: ToolbarProps) => {
+  const { setUsers } = useContext(contextData);
+
   const toolbarItems = [
     {
       icon: (
         <LockOpen
           color={"blue"}
-          onClick={() => {
+          onClick={async () => {
             if (!dataChangeUser?.blocked) {
               return;
             }
-            console.log("USER unLOCKED");
+            console.log("USER UNLOCKED");
+            toast.success("User unlocked");
+
+            await updateDoc(doc(db, "users", `${dataChangeUser?.userLogin}`), {
+              blocked: !dataChangeUser?.blocked,
+            });
+            setUsers((prev: any) =>
+              prev.map((user: UserInfoTypes) =>
+                user.userLogin === dataChangeUser?.userLogin
+                  ? { ...user, blocked: !dataChangeUser?.blocked }
+                  : user,
+              ),
+            );
+            setDataChangeUser(null);
+            setToolbarAccess(false);
+            handleRemove();
           }}
         />
       ),
@@ -30,11 +62,26 @@ const Toolbar = ({ toolbarAccess, dataChangeUser }: ToolbarProps) => {
       icon: (
         <Lock
           color={"blue"}
-          onClick={() => {
+          onClick={async () => {
             if (dataChangeUser?.blocked) {
               return;
             }
             console.log("USER LOCKED");
+            toast.success("User locked");
+
+            await updateDoc(doc(db, "users", `${dataChangeUser?.userLogin}`), {
+              blocked: !dataChangeUser?.blocked,
+            });
+            setUsers((prev: any) =>
+              prev.map((user: UserInfoTypes) =>
+                user.userLogin === dataChangeUser?.userLogin
+                  ? { ...user, blocked: !dataChangeUser?.blocked }
+                  : user,
+              ),
+            );
+            setDataChangeUser(null);
+            setToolbarAccess(false);
+            handleRemove();
           }}
         />
       ),
@@ -45,8 +92,19 @@ const Toolbar = ({ toolbarAccess, dataChangeUser }: ToolbarProps) => {
       icon: (
         <Trash2
           color={"red"}
-          onClick={() => {
+          onClick={async () => {
             console.log("USER DELETED");
+            toast.error("User deleted");
+
+            await deleteDoc(doc(db, "users", `${dataChangeUser?.userLogin}`));
+            setUsers((prev: any) =>
+              prev.filter(
+                (item: UserInfoTypes) =>
+                  item.userLogin !== dataChangeUser?.userLogin,
+              ),
+            );
+            setDataChangeUser(null);
+            setToolbarAccess(false);
           }}
         />
       ),
@@ -56,7 +114,7 @@ const Toolbar = ({ toolbarAccess, dataChangeUser }: ToolbarProps) => {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-2">
+    <div className="w-full flex flex-col md:flex-row items-center justify-between gap-2">
       <div className="flex gap-2">
         {toolbarItems.map((item, index) =>
           toolbarAccess ? (
@@ -87,8 +145,13 @@ const Toolbar = ({ toolbarAccess, dataChangeUser }: ToolbarProps) => {
           ),
         )}
       </div>
-      <div className="flex gap-1">
-        Account email: <p className="underline">{currentUser?.userLogin}</p>
+      <div className="flex">
+        <input
+          className="py-1 px-2 border rounded-lg"
+          placeholder="Filtering by email..."
+          onChange={(e) => setFilter(e.target.value)}
+          value={filter}
+        />
       </div>
     </div>
   );

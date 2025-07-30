@@ -11,7 +11,7 @@ import { UserInfoTypes } from "@/types/service";
 import { contextData } from "@/components/context/Context";
 
 function RegisterComponent() {
-  const { setUsers } = useContext(contextData);
+  const { setUsers, getCurrentUser } = useContext(contextData);
 
   const [stateForm, setStateForm] = useState({
     userName: "",
@@ -54,6 +54,7 @@ function RegisterComponent() {
           uid: userCredentials.user.uid,
         };
         addUserFirebase(userInputInfo);
+        getCurrentUser();
       })
       .catch((err) => {
         setStateForm({ ...stateForm, error: err.code });

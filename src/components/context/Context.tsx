@@ -5,6 +5,8 @@ import Cookies from "js-cookie";
 import { UserInfoTypes } from "@/types/service";
 import { collection, doc, getDocs, updateDoc } from "@firebase/firestore";
 import { db } from "@/config/config";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 type ContextProps = {
   isAuth: boolean;
@@ -12,6 +14,7 @@ type ContextProps = {
   users: UserInfoTypes[] | null;
   setUsers: (prev: any) => void;
   currentUser: UserInfoTypes | null;
+  getCurrentUser: () => void;
 };
 
 export const contextData = createContext({} as ContextProps);
@@ -24,6 +27,8 @@ export function ContextOverAll({ children }: ContextOverAllProps) {
   const [isAuth, setIsAuth] = useState<boolean>(false);
   const [users, setUsers] = useState<UserInfoTypes[]>([]);
   const [currentUser, setCurrentUser] = useState<UserInfoTypes | null>(null);
+  const [updated, setUpdated] = useState<boolean>(false);
+  const router = useRouter();
 
   useEffect(() => {
     !isAuth && checkIfUserLogged();
@@ -31,15 +36,24 @@ export function ContextOverAll({ children }: ContextOverAllProps) {
   }, []);
 
   useEffect(() => {
-    getCurrentUser();
+    users?.length !== 0 && !updated && getCurrentUser();
   }, [users]);
 
   const getCurrentUser = async () => {
     const uid = Cookies.get("uid");
+    console.log(123);
     users?.map((item) => {
       if (item.uid === uid) {
-        setCurrentUser(item);
-        updateLastSeen(item);
+        if (!item.blocked) {
+          setCurrentUser(item);
+          updateLastSeen(item);
+          setUpdated(true);
+        } else {
+          router.push("/");
+          toast.error("You are blocked!");
+          setIsAuth(false);
+          Cookies.remove("uid");
+        }
       }
     });
   };
@@ -49,6 +63,13 @@ export function ContextOverAll({ children }: ContextOverAllProps) {
     await updateDoc(userRef, {
       lastActiveDate: new Date().toUTCString(),
     });
+    setUsers((prev: any) =>
+      prev.map((user: UserInfoTypes) =>
+        user.userLogin === userCB.userLogin
+          ? { ...user, lastActiveDate: new Date().toUTCString() }
+          : user,
+      ),
+    );
   };
 
   const getAllUsers = async () => {
@@ -76,6 +97,7 @@ export function ContextOverAll({ children }: ContextOverAllProps) {
         users,
         setUsers,
         currentUser,
+        getCurrentUser,
       }}
     >
       {children}
